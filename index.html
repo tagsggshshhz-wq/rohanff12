@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameHub BD</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#0b1020;color:#fff}
+header{position:sticky;top:0;z-index:5;background:#111936cc;backdrop-filter:blur(12px);border-bottom:1px solid #26304f}
+.nav{max-width:1100px;margin:auto;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.logo{font-size:24px;font-weight:800;color:#67e8f9}.logo span{color:#a78bfa}
+button,.btn{border:0;border-radius:10px;padding:11px 15px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer}
+button:hover,.btn:hover{opacity:.88}.hero{max-width:1100px;margin:35px auto 20px;padding:35px 20px;text-align:center}
+.hero h1{font-size:42px;margin:0 0 10px}.hero p{color:#aeb8d4}.search{max-width:650px;margin:22px auto;display:flex;gap:8px}.search input{flex:1;padding:14px;border-radius:12px;border:1px solid #303b61;background:#151d39;color:#fff}
+.container{max-width:1100px;margin:auto;padding:0 20px 50px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+.card{background:#121a33;border:1px solid #273255;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px #0003}.thumb{width:100%;height:145px;object-fit:cover;background:#202b4b}.cardbody{padding:15px}.card h3{margin:0 0 8px}.meta{font-size:13px;color:#9eabc9;margin-bottom:12px}.actions{display:flex;gap:8px}.actions .btn{flex:1;text-align:center}
+.empty{text-align:center;padding:45px;color:#9eabc9}.panel{display:none;position:fixed;inset:0;background:#0009;z-index:20;padding:20px;overflow:auto}.modal{max-width:650px;margin:30px auto;background:#121a33;border:1px solid #303b61;border-radius:18px;padding:22px}
+.modal h2{margin-top:0}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin:10px 0}.field label{display:block;font-size:13px;color:#aeb8d4;margin-bottom:6px}.field input,.field textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #303b61;background:#0c1329;color:#fff}.field textarea{min-height:90px;resize:vertical}.modal-actions{display:flex;gap:10px;margin-top:15px}.close{background:#374151}.video{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;margin-top:12px}
+@media(max-width:600px){.hero h1{font-size:30px}.row{grid-template-columns:1fr}.nav{padding:12px 15px}.logo{font-size:20px}}
+</style>
+</head>
+<body>
+<header><div class="nav"><div class="logo">Game<span>Hub</span> BD</div><button onclick="openAdmin()">＋ Add Game</button></div></header>
+
+<section class="hero">
+<h1>তোমার Game & Video Hub 🎮</h1>
+<p>গেমের তথ্য, ছবি, ভিডিও ও ডাউনলোড লিংক এক জায়গায় দেখাও।</p>
+<div class="search"><input id="search" placeholder="Game খুঁজুন..." oninput="render()"></div>
+</section>
+
+<main class="container">
+<div id="grid" class="grid"></div>
+<div id="empty" class="empty" style="display:none">কোনো Game পাওয়া যায়নি।</div>
+</main>
+
+<div id="panel" class="panel">
+<div class="modal">
+<h2>নতুন Game যোগ করুন</h2>
+<div class="row">
+<div class="field"><label>Game Name</label><input id="name" placeholder="যেমন: Free Fire MAX"></div>
+<div class="field"><label>Category</label><input id="category" placeholder="Action / Racing"></div>
+</div>
+<div class="field"><label>Image URL</label><input id="image" placeholder="https://...jpg"></div>
+<div class="field"><label>Video URL (YouTube বা MP4)</label><input id="video" placeholder="https://..."></div>
+<div class="field"><label>Download URL</label><input id="download" placeholder="https://..."></div>
+<div class="field"><label>Description</label><textarea id="desc" placeholder="Game সম্পর্কে লিখুন..."></textarea></div>
+<div class="modal-actions"><button onclick="addGame()">Save Game</button><button class="close" onclick="closeAdmin()">Cancel</button></div>
+</div>
+</div>
+
+<script>
+const key="gamehub_games";
+const starter=[
+{name:"Free Fire MAX",category:"Battle Royale",image:"https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",video:"https://www.youtube.com/watch?v=dQw4w9WgXcQ",download:"#",desc:"জনপ্রিয় battle royale গেমের জন্য তোমার নিজের game page."},
+{name:"Racing Demo",category:"Racing",image:"https://images.unsplash.com/photo-1511994477422-b69e44bd4ea9?auto=format&fit=crop&w=800&q=80",video:"",download:"#",desc:"একটি sample racing game card."}
+];
+let games=JSON.parse(localStorage.getItem(key)||"null")||starter;
+function save(){localStorage.setItem(key,JSON.stringify(games))}
+function render(){
+ const q=document.getElementById("search").value.toLowerCase();
+ const list=games.filter(g=>(g.name+" "+g.category).toLowerCase().includes(q));
+ document.getElementById("empty").style.display=list.length?"none":"block";
+ document.getElementById("grid").innerHTML=list.map((g,i)=>`
+ <article class="card">
+ <img class="thumb" src="${esc(g.image||'')}" onerror="this.style.display='none'">
+ <div class="cardbody"><h3>${esc(g.name)}</h3><div class="meta">${esc(g.category)}</div>
+ <p>${esc(g.desc||'')}</p>
+ <div class="actions">${g.video?`<a class="btn" href="${esc(g.video)}" target="_blank">▶ Video</a>`:''}${g.download?`<a class="btn" href="${esc(g.download)}" target="_blank">⬇ Download</a>`:''}</div>
+ <button style="margin-top:10px;background:#334155" onclick="deleteGame(${i})">Delete</button>
+ </div></article>`).join("");
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function openAdmin(){document.getElementById("panel").style.display="block"}
+function closeAdmin(){document.getElementById("panel").style.display="none"}
+function addGame(){
+ const g={name:name.value.trim(),category:category.value.trim(),image:image.value.trim(),video:video.value.trim(),download:download.value.trim(),desc:desc.value.trim()};
+ if(!g.name){alert("Game Name দিন");return}
+ games.unshift(g);save();render();closeAdmin();
+ ["name","category","image","video","download","desc"].forEach(id=>document.getElementById(id).value="");
+}
+function deleteGame(i){if(confirm("এই Game মুছে ফেলবেন?")){games.splice(i,1);save();render()}}
+render();
+</script>
+</body>
+</html>
